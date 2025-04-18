@@ -19,7 +19,7 @@ def hamming_distance(s1, s2):
 
 def get_closest_match(name, correct_list):
     if not name or not isinstance(name, str):
-        return None
+        return "None"
 
     name = name.strip().upper()
     correct_list_cleaned = [n.strip().upper() for n in correct_list]
@@ -31,14 +31,16 @@ def get_closest_match(name, correct_list):
         best_match_index = distances.index(min_distance)
         return correct_list[best_match_index]
     else:
-        return None
+        return "None"
 
 def clean_data(df: pd.DataFrame):
-    for column in ['Departure station', 'Arrival station']:
-        if column in df.columns:
-            df[column] = df[column].fillna("").apply(
-                lambda x: get_closest_match(str(x), clean_names)
-            )
+    for column in df.columns:
+        if column in ['Departure station', 'Arrival station'] or 'comments' in column:
+            print(column)
+            if column in df.columns:
+                df[column] = df[column].fillna("").apply(lambda x: get_closest_match(str(x), clean_names))
+        else:
+            df[column] = df[column].fillna(0)
 
 def read_csv(csv_path):
     df = pd.read_csv(
@@ -55,15 +57,13 @@ def read_csv(csv_path):
 def show_data(df):
     df.columns = df.columns.str.strip()
     df["Departure station"] = df["Departure station"].astype(str).str.upper().str.strip()
-    df["Average delay of all trains at departure"] = pd.to_numeric(df["Average delay of all trains at departure"], errors='coerce')
+    df["Average journey time"] = pd.to_numeric(df["Average journey time"], errors='coerce')
 
-    df_grouped = df.groupby("Departure station")["Average delay of all trains at departure"].mean().reset_index()
+    df_grouped = df.groupby("Departure station")["Average journey time"].mean().reset_index()
 
     stations = df_grouped["Departure station"].tolist()
-    delays = df_grouped["Average delay of all trains at departure"].tolist()
+    delays = df_grouped["Average journey time"].tolist()
 
-    print(stations)
-    print(f"\n\n{delays}")
     plt.figure(figsize=(10, 6))
     plt.plot(stations, delays, marker='o')
     plt.xticks(rotation=45, ha='right')
@@ -75,7 +75,7 @@ def show_data(df):
     plt.show()
 
 def to_csv(df: pd.DataFrame, path="test.csv"):
-    df.to_csv(path, sep=";")
+    df.to_csv(path, sep=";", index=None)
 
 def main():
     if (len(sys.argv) != 2):
