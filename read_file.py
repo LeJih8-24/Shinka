@@ -122,6 +122,24 @@ def read_csv(csv_path):
     )
     return df
 
+def append_to_dic(line, columns, dic):
+    name = line["Departure station"]
+    if name not in dic:
+        dic[name] = {}
+    for elt in columns:
+        if elt not in dic[name]:
+            dic[name][elt] = []
+        dic[name][elt].append(line[elt])
+    return 0
+
+def get_data_tab(df: pd.DataFrame):
+    dic = {}
+    df_sorted = df.sort_values('Departure station')
+    numeric_columns = df_sorted.select_dtypes(include=[np.number]).columns.tolist()
+    for i in range(0, len(df_sorted)):
+        append_to_dic(df_sorted.iloc[i], numeric_columns, dic)
+    return dic
+
 
 def get_data_station(df: pd.DataFrame):
     dic_values = {}
@@ -183,8 +201,7 @@ def main():
     print("Données sauvegardées dans test.csv.")
 
     data_values_dic = get_data_station(df)
-    print(data_values_dic)
-
+    data_values_tab = get_data_tab(df)
 
 if __name__ == "__main__":
     main()
