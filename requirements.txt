@@ -1,0 +1,5 @@
+pandas
+csv
+matplotlib
+numpy
+sys
