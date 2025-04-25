@@ -9,7 +9,7 @@ import csv
 from matplotlib import pyplot as plt
 import numpy as np
 import sys
-from dictionary_visualizer import visualiser_dictionnaire
+from bonus.dictionary_visualizer import visualiser_dictionnaire
 
 clean_names = [
     "BORDEAUX ST JEAN",
@@ -72,59 +72,46 @@ clean_names = [
     "LE CREUSOT MONTCEAU MONTCHANIN",
     "REIMS",
 ]
-
-
-def hamming_distance(s1, s2):
-    if len(s1) != len(s2):
-        return np.inf
-    return sum(ch1 != ch2 for ch1, ch2 in zip(s1, s2))
-
-
-def get_closest_match(name, correct_list):
-    if not name or not isinstance(name, str):
-        return "None"
-
-    name = name.strip().upper()
-    correct_list_cleaned = [n.strip().upper() for n in correct_list]
-
-    distances = [hamming_distance(name, ref) for ref in correct_list_cleaned]
-    min_distance = min(distances)
-
-    if min_distance <= 1:
-        best_match_index = distances.index(min_distance)
-        return correct_list[best_match_index]
-    else:
-        return "None"
-
-
-def clean_data(df: pd.DataFrame):
-    for column in df.columns:
-        if column in ["Departure station", "Arrival station"] or "comments" in column:
-            print(column)
-            if column in df.columns:
-                df[column] = (
-                    df[column]
-                    .fillna("")
-                    .apply(lambda x: get_closest_match(str(x), clean_names))
-                )
-        elif column == "Date":
-            df[column] = df[column].fillna(method='ffill')
-        else:
-            df[column] = df[column].fillna(0)
-
-
-def read_csv(csv_path):
-    df = pd.read_csv(
-        csv_path,
-        sep=";",
-        encoding="utf-8",
-        quoting=csv.QUOTE_NONE,
-        escapechar="\\",
-        on_bad_lines="skip",
-        engine="python",
+def show_data(df):
+    df.columns = df.columns.str.strip()
+    df["Departure station"] = (
+        df["Departure station"].astype(str).str.upper().str.strip()
     )
-    return df
+    df["Average journey time"] = pd.to_numeric(
+        df["Average journey time"], errors="coerce"
+    )
 
+    df_grouped = (
+        df.groupby("Departure station")["Number of cancelled trains"]
+        .mean()
+        .reset_index()
+    )
+
+    stations = df_grouped["Departure station"].tolist()
+    delays = df_grouped["Number of cancelled trains"].tolist()
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(stations, delays, marker="o")
+    plt.xticks(rotation=45, ha="right")
+    plt.title("Retards moyens par station de départ")
+    plt.xlabel("Station")
+    plt.ylabel("Retard moyen (min)")
+    plt.tight_layout()
+    plt.grid(True)
+    plt.show()
+
+def get_data_station(df: pd.DataFrame):
+    dic_values = {}
+    temp_dic = {}
+    numeric_columns = df.select_dtypes(include=[np.number]).columns.tolist()
+    df_grouped = df.groupby("Departure station")[numeric_columns].mean().reset_index()
+    to_csv(df_grouped, path="grouped.csv")
+    for elt in df_grouped["Departure station"]:
+        tab = df_grouped[df_grouped["Departure station"] == elt].iloc[0]
+        for i in range(1, len(tab)):
+            temp_dic[df_grouped.columns[i]] = tab[i]
+        dic_values[elt] = temp_dic
+    return dic_values
 
 def append_to_dic(line, columns, dic, table_of_dup):
     name = line["Departure station"]
@@ -158,65 +145,65 @@ def get_data_tab(df: pd.DataFrame):
         append_to_dic(df_sorted.iloc[i], numeric_columns, dic, table)
     return dic
 
-
-def get_data_station(df: pd.DataFrame):
-    dic_values = {}
-    temp_dic = {}
-    numeric_columns = df.select_dtypes(include=[np.number]).columns.tolist()
-    df_grouped = df.groupby("Departure station")[numeric_columns].mean().reset_index()
-    to_csv(df_grouped, path="grouped.csv")
-    for elt in df_grouped["Departure station"]:
-        tab = df_grouped[df_grouped["Departure station"] == elt].iloc[0]
-        for i in range(1, len(tab)):
-            temp_dic[df_grouped.columns[i]] = tab[i]
-        dic_values[elt] = temp_dic
-    return dic_values
-
-
-def show_data(df):
-    df.columns = df.columns.str.strip()
-    df["Departure station"] = (
-        df["Departure station"].astype(str).str.upper().str.strip()
+def read_csv(csv_path):
+    df = pd.read_csv(
+        csv_path,
+        sep=";",
+        encoding="utf-8",
+        quoting=csv.QUOTE_NONE,
+        escapechar="\\",
+        on_bad_lines="skip",
+        engine="python",
     )
-    df["Average journey time"] = pd.to_numeric(
-        df["Average journey time"], errors="coerce"
-    )
-
-    df_grouped = (
-        df.groupby("Departure station")["Number of cancelled trains"]
-        .mean()
-        .reset_index()
-    )
-
-    stations = df_grouped["Departure station"].tolist()
-    delays = df_grouped["Number of cancelled trains"].tolist()
-
-    plt.figure(figsize=(10, 6))
-    plt.plot(stations, delays, marker="o")
-    plt.xticks(rotation=45, ha="right")
-    plt.title("Retards moyens par station de départ")
-    plt.xlabel("Station")
-    plt.ylabel("Retard moyen (min)")
-    plt.tight_layout()
-    plt.grid(True)
-    plt.show()
-
+    return df
 
 def to_csv(df: pd.DataFrame, path="test.csv"):
     df.to_csv(path, sep=";", index=None)
+def hamming_distance(s1, s2):
+    if len(s1) != len(s2):
+        return np.inf
+    return sum(ch1 != ch2 for ch1, ch2 in zip(s1, s2))
 
 
-def main():
-    if len(sys.argv) != 2:
-        print("python3 read_file.py [file]")
-        exit(2)
+def get_closest_match(name, correct_list):
+    if not name or not isinstance(name, str):
+        return "None"
+
+    name = name.strip().upper()
+    correct_list_cleaned = [n.strip().upper() for n in correct_list]
+
+    distances = [hamming_distance(name, ref) for ref in correct_list_cleaned]
+    min_distance = min(distances)
+
+    if min_distance <= 1:
+        best_match_index = distances.index(min_distance)
+        return correct_list[best_match_index]
+    else:
+        return "None"
+
+def clean_data(df: pd.DataFrame):
+    for column in df.columns:
+        if column in ["Departure station", "Arrival station"] or "comments" in column:
+            print(column)
+            if column in df.columns:
+                df[column] = (
+                    df[column]
+                    .fillna("")
+                    .apply(lambda x: get_closest_match(str(x), clean_names))
+                )
+        elif column == "Date":
+            df[column] = df[column].fillna(method='ffill')
+        else:
+            df[column] = df[column].fillna(0)
+
+def main(): 
     df = read_csv("dataset.csv")
     print("Fichier lu.")
 
     clean_data(df)
     print("Données nettoyées.")
 
-    # to_csv(df)
+    to_csv(df, path="cleaned_dataset.csv")
     print("Données sauvegardées dans test.csv.")
 
     data_values_dic = get_data_station(df)
