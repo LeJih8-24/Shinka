@@ -1,5 +1,3 @@
-pandas
-csv
-matplotlib
-numpy
-sys
+pandas==2.1.4+dfsg
+matplotlib==3.6.3
+numpy==1.26.4
