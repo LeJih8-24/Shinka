@@ -14,6 +14,7 @@ train-delay-project/
 └── requirements.txt        # Dependencies list
 └── read_file.py            # Read file and cleans it, beta version of tardis_eda.ipynb
 └── tardis_eda.ipynb        # Read file and cleans it, write into cleaned_dataset.csv
+└── tardis_model.ipynb      # Make prediction with a prediction model with the data processed with tardis_eda
 ```
 
 ---
