@@ -1,8 +1,6 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from src.home import apply_dark_mode, apply_white_mode
-
 
 def tableaux():
     # Tableau modulable avec des tris qui se font automatiquement (streamlit c'est vraiment sexy ptn)
@@ -58,11 +56,11 @@ def widget():
 
 def layout():
     # Ici l'option .sidebar permet de mettre exactement la même mais sur le côté
-    add_selectbox = st.sidebar.selectbox(
+    st.sidebar.selectbox(
         "How would you like to be contacted?", ("Email", "Home phone", "Mobile phone")
     )
 
-    add_slider = st.sidebar.slider("Select a range of values", 0.0, 100.0, (25.0, 75.0))
+    st.sidebar.slider("Select a range of values", 0.0, 100.0, (25.0, 75.0))
 
     # Ca c'est du formatting par exemple j'ai formatté en deux colonnes
     left_column, right_column = st.columns(2)
@@ -127,15 +125,12 @@ def exemple_load_pages():
 
     pg.run()
 
+
 def call_pages():
     admin_page = st.Page("src/settings.py", title="Settings")
     home_page = st.Page("src/home.py", title="Home")
-    pg = st.navigation(
-        {
-            "App": [home_page],
-            "Tools": [admin_page]
-        }
-    )
+    pg = st.navigation({"App": [home_page], "Tools": [admin_page]})
     pg.run()
+
 
 call_pages()
