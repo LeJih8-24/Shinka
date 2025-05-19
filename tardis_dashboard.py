@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+from pages.Home import apply_dark_mode, apply_white_mode
 
 
 def tableaux():
@@ -126,11 +127,13 @@ def exemple_load_pages():
 
     pg.run()
 
+def main_page():
+    st.title("Main page")
+    dark_mode = st.session_state.get("dark_mode", False)
 
-def main():
-    st.write("Hello World!")
-    return 0
+    if dark_mode:
+        apply_dark_mode()
+    else:
+        apply_white_mode()
 
-
-if __name__ == "__main__":
-    main()
+main_page()
