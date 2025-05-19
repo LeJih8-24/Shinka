@@ -3,3 +3,4 @@ matplotlib==3.6.3
 numpy==1.26.4
 networkx==2.8.8
 systemd-python==235
+streamlit==1.45.1
