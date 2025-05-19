@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from pages.Home import apply_dark_mode, apply_white_mode
+from src.home import apply_dark_mode, apply_white_mode
 
 
 def tableaux():
@@ -127,13 +127,15 @@ def exemple_load_pages():
 
     pg.run()
 
-def main_page():
-    st.title("Main page")
-    dark_mode = st.session_state.get("dark_mode", False)
+def call_pages():
+    admin_page = st.Page("src/settings.py", title="Settings")
+    home_page = st.Page("src/home.py", title="Home")
+    pg = st.navigation(
+        {
+            "App": [home_page],
+            "Tools": [admin_page]
+        }
+    )
+    pg.run()
 
-    if dark_mode:
-        apply_dark_mode()
-    else:
-        apply_white_mode()
-
-main_page()
+call_pages()
