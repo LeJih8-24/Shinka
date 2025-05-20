@@ -1,7 +1,77 @@
 import streamlit as st
+import pandas as pd
+from src.station_pages.unique_station_data import get_values_per_station
+from get_data import read_csv
+
+clean_names = [
+    "BORDEAUX ST JEAN",
+    "LA ROCHELLE VILLE",
+    "PARIS MONTPARNASSE",
+    "QUIMPER",
+    "TOURS",
+    "ST PIERRE DES CORPS",
+    "ST MALO",
+    "NANTES",
+    "PARIS EST",
+    "STRASBOURG",
+    "DUNKERQUE",
+    "LILLE",
+    "PARIS VAUGIRARD",
+    "RENNES",
+    "TOURCOING",
+    "CHAMBERY CHALLES LES EAUX",
+    "LYON PART DIEU",
+    "MONTPELLIER",
+    "MULHOUSE VILLE",
+    "NICE VILLE",
+    "PARIS LYON",
+    "BARCELONA",
+    "GENEVE",
+    "MADRID",
+    "BREST",
+    "POITIERS",
+    "TOULOUSE MATABIAU",
+    "MARNE LA VALLEE",
+    "MARSEILLE ST CHARLES",
+    "FRANCFORT",
+    "ANGOULEME",
+    "METZ",
+    "PARIS NORD",
+    "BELLEGARDE (AIN)",
+    "MACON LOCHE",
+    "PERPIGNAN",
+    "DOUAI",
+    "VALENCE ALIXAN TGV",
+    "LAUSANNE",
+    "ANGERS SAINT LAUD",
+    "STUTTGART",
+    "LAVAL",
+    "NANCY",
+    "BESANCON FRANCHE COMTE TGV",
+    "GRENOBLE",
+    "NIMES",
+    "SAINT ETIENNE CHATEAUCREUX",
+    "ITALIE",
+    "ZURICH",
+    "VANNES",
+    "ANNECY",
+    "AVIGNON TGV",
+    "MADRID",
+    "LE MANS",
+    "ST MALO",
+    "ARRAS",
+    "DIJON VILLE",
+    "LE CREUSOT MONTCEAU MONTCHANIN",
+    "REIMS",
+]
 
 def station_page():
     st.title("Station infos")
+    df = pd.DataFrame({"Cities": clean_names})
+    option = st.selectbox("Select a station", df["Cities"])
+    st.write("Here is the informations for the station:", option)
+    dic = get_values_per_station(stats, option)
+    st.write(dic["Average delay"], dic["Average journey time"], dic["Ratio scheduled/cancelled"], dic["Ratio National/International"], dic["Biggest delay cause"])
 
 def station_map():
     st.title("Maps")
@@ -60,6 +130,7 @@ def style_btn():
 if "page" not in st.session_state:
     st.session_state["page"] = "station_page"
 
+stats = read_csv("cleaned_dataset.csv")
 draw_buttons()
 
 page = st.session_state["page"]
