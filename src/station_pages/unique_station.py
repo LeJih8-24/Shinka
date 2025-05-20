@@ -6,68 +6,34 @@ from src.station_pages.unique_station_data import get_values_per_station
 from get_data import read_csv
 import folium
 from streamlit_folium import st_folium
+import random
+from src.station_pages.table_data import clean_names, coor_station
 
-clean_names = [
-    "BORDEAUX ST JEAN",
-    "LA ROCHELLE VILLE",
-    "PARIS MONTPARNASSE",
-    "QUIMPER",
-    "TOURS",
-    "ST PIERRE DES CORPS",
-    "ST MALO",
-    "NANTES",
-    "PARIS EST",
-    "STRASBOURG",
-    "DUNKERQUE",
-    "LILLE",
-    "PARIS VAUGIRARD",
-    "RENNES",
-    "TOURCOING",
-    "CHAMBERY CHALLES LES EAUX",
-    "LYON PART DIEU",
-    "MONTPELLIER",
-    "MULHOUSE VILLE",
-    "NICE VILLE",
-    "PARIS LYON",
-    "BARCELONA",
-    "GENEVE",
-    "MADRID",
-    "BREST",
-    "POITIERS",
-    "TOULOUSE MATABIAU",
-    "MARNE LA VALLEE",
-    "MARSEILLE ST CHARLES",
-    "FRANCFORT",
-    "ANGOULEME",
-    "METZ",
-    "PARIS NORD",
-    "BELLEGARDE (AIN)",
-    "MACON LOCHE",
-    "PERPIGNAN",
-    "DOUAI",
-    "VALENCE ALIXAN TGV",
-    "LAUSANNE",
-    "ANGERS SAINT LAUD",
-    "STUTTGART",
-    "LAVAL",
-    "NANCY",
-    "BESANCON FRANCHE COMTE TGV",
-    "GRENOBLE",
-    "NIMES",
-    "SAINT ETIENNE CHATEAUCREUX",
-    "ITALIE",
-    "ZURICH",
-    "VANNES",
-    "ANNECY",
-    "AVIGNON TGV",
-    "MADRID",
-    "LE MANS",
-    "ST MALO",
-    "ARRAS",
-    "DIJON VILLE",
-    "LE CREUSOT MONTCEAU MONTCHANIN",
-    "REIMS",
-]
+def generate_intermediate_coords(start_coord, end_coord, steps=12, jitter=0.1):
+    """
+    Génère une liste de tuples (lat, lon) reliant start_coord à end_coord
+    avec une interpolation fluide + un peu de bruit aléatoire (jitter).
+
+    - start_coord : tuple (lat, lon) de départ
+    - end_coord   : tuple (lat, lon) d'arrivée
+    - steps       : nombre total de points (incluant start et end)
+    - jitter      : amplitude maximale du bruit ajouté
+    """
+    lat1, lon1 = start_coord
+    lat2, lon2 = end_coord
+
+    coords = [start_coord]
+    for i in range(steps):
+        t = i / (steps - 1)  # valeur de 0 à 1
+        # interpolation linéaire
+        lat = lat1 + t * (lat2 - lat1)
+        lon = lon1 + t * (lon2 - lon1)
+        # ajout de petites perturbations pour rendre la ligne "fluide"
+        lat += random.uniform(-jitter, jitter) * (1 - abs(0.5 - t)) * 2  # moins de jitter en début/fin
+        lon += random.uniform(-jitter, jitter) * (1 - abs(0.5 - t)) * 2
+        coords.append((lat, lon))
+    coords.append(end_coord)
+    return coords
 
 def station_page():
     st.title("Station infos")
@@ -132,68 +98,59 @@ def station_page():
 def station_map():
     st.title("Maps")
     df = pd.DataFrame({"Cities": clean_names})
+
     start_col, end_col = st.columns(2)
     with start_col:
-        start = st.selectbox("Select a departure station", df["Cities"])
+        start = st.selectbox("Select a departure station", df["Cities"], key="start_station")
     with end_col:
-        end = st.selectbox("Select an arrival station", df["Cities"])
-    st.write(f"Here is the informations for the route: {start} - {end}")
-    route_coordinates = {
-    "Route_3 (ports with cold storage)": [34.0522, -118.2437],
-    "Route_7_Alternate (ports with cold storage)": [
-        -39.49,
-        23.59,
-    ],  # Changed this to show a way different route
-    }
-    port_coordinates = {
-        "Port of Shanghai": [44.833328,  -0.56667],
-        "Los Angeles Port": [48.8575475, 2.3513765],
-    }
+        end = st.selectbox("Select an arrival station", df["Cities"], key="end_station")
 
-    origin_coords = port_coordinates["Port of Shanghai"]
-    destination_coords = port_coordinates["Los Angeles Port"]
-    prev_coords = route_coordinates["Route_3 (ports with cold storage)"]
-    #updated_coords = route_coordinates["Route_7_Alternate (ports with cold storage)"]
+    st.write(f"Here is the information for the route: {start} - {end}")
 
-    # Initialize Folium map centered at the midpoint
+    # Init state for previous values and coords
+    if "previous_start" not in st.session_state:
+        st.session_state.previous_start = None
+    if "previous_end" not in st.session_state:
+        st.session_state.previous_end = None
+    if "generated_coords" not in st.session_state:
+        st.session_state.generated_coords = []
+
+    # If selection has changed → update coords
+    if start != st.session_state.previous_start or end != st.session_state.previous_end:
+        st.session_state.generated_coords = generate_intermediate_coords(
+            coor_station[start], coor_station[end]
+        )
+        st.session_state.previous_start = start
+        st.session_state.previous_end = end
+
     midpoint = [
-        (origin_coords[0] + destination_coords[0]) / 2,
-        (origin_coords[1] + destination_coords[1]) / 2,
+        (coor_station[start][0] + coor_station[end][0]) / 2,
+        (coor_station[start][1] + coor_station[end][1]) / 2,
     ]
-    folium_map = folium.Map(location=midpoint, zoom_start=1)
+    folium_map = folium.Map(location=midpoint, zoom_start=5)
 
-    # Add markers for ports
     folium.Marker(
-        location=origin_coords,
-        popup="Bordeaux St Jean",
+        location=coor_station[start],
+        popup=start,
         icon=folium.Icon(color="orange"),
     ).add_to(folium_map)
 
     folium.Marker(
-        location=destination_coords,
-        popup="Paris Est",
+        location=coor_station[end],
+        popup=end,
         icon=folium.Icon(color="blue"),
     ).add_to(folium_map)
 
-    # Add previous route (in red)
     folium.PolyLine(
-        locations=[origin_coords, destination_coords],
+        locations=st.session_state.generated_coords,
         color="red",
         weight=3,
         tooltip="Previous Route",
     ).add_to(folium_map)
 
-    # # Add updated route (in green)
-    # folium.PolyLine(
-    #     locations=[origin_coords, destination_coords],
-    #     color="green",
-    #     weight=3,
-    #     tooltip="Updated Route",
-    # ).add_to(folium_map)
-
-    # Display the map
     st.write("Map Visualization:")
     st_folium(folium_map, height=450, use_container_width=True)
+
 
 def station_date():
     st.title("Dates information")
