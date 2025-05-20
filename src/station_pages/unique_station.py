@@ -1,4 +1,5 @@
 import streamlit as st
+from st_circular_progress import CircularProgress
 import pandas as pd
 from src.station_pages.unique_station_data import get_values_per_station
 from get_data import read_csv
@@ -70,8 +71,26 @@ def station_page():
     df = pd.DataFrame({"Cities": clean_names})
     option = st.selectbox("Select a station", df["Cities"])
     st.write("Here is the informations for the station:", option)
+    nat_ratio_col, sched_ratio_col = st.columns(2)
     dic = get_values_per_station(stats, option)
-    st.write(dic["Average delay"], dic["Average journey time"], dic["Ratio scheduled/cancelled"], dic["Ratio National/International"], dic["Biggest delay cause"])
+    with nat_ratio_col:
+        national_ratio = CircularProgress(
+            label="Ratio National/International",
+            value= int(dic["Ratio National/International"][0]),
+            key="national_ratio",
+            size="medium",
+            color="green")
+        national_ratio.st_circular_progress()
+        national_ratio.update_value(progress=int(dic["Ratio National/International"][0]))
+    with sched_ratio_col:
+        scheduled_ratio = CircularProgress(
+            label="Ratio Scheduled/Cancelled",
+            value= int(dic["Ratio scheduled/cancelled"][0]),
+            key="scheduled_ratio",
+            size="medium")
+        scheduled_ratio.st_circular_progress()
+        scheduled_ratio.update_value(progress=int(dic["Ratio scheduled/cancelled"][0]))
+    st.write(dic["Average delay"], dic["Average journey time"], dic["Ratio scheduled/cancelled"], dic["Biggest delay cause"])
 
 def station_map():
     st.title("Maps")
