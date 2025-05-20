@@ -4,3 +4,5 @@ numpy==1.26.4
 streamlit==1.45.1
 st-circular-progress==0.3.9
 streamviz==5.1
+streamlit_folium==0.25.0
+folium==0.19.6
