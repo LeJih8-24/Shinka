@@ -49,6 +49,9 @@ def style_btn():
             background-color: {hover_color};
             color: white;
         }}
+        div.stButton > button.content {{
+            color: white;
+        }}
         </style>
         """,
         unsafe_allow_html=True
