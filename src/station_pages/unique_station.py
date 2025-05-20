@@ -4,6 +4,8 @@ import streamviz as sv
 import pandas as pd
 from src.station_pages.unique_station_data import get_values_per_station
 from get_data import read_csv
+import folium
+from streamlit_folium import st_folium
 
 clean_names = [
     "BORDEAUX ST JEAN",
@@ -129,6 +131,69 @@ def station_page():
 
 def station_map():
     st.title("Maps")
+    df = pd.DataFrame({"Cities": clean_names})
+    start_col, end_col = st.columns(2)
+    with start_col:
+        start = st.selectbox("Select a departure station", df["Cities"])
+    with end_col:
+        end = st.selectbox("Select an arrival station", df["Cities"])
+    st.write(f"Here is the informations for the route: {start} - {end}")
+    route_coordinates = {
+    "Route_3 (ports with cold storage)": [34.0522, -118.2437],
+    "Route_7_Alternate (ports with cold storage)": [
+        -39.49,
+        23.59,
+    ],  # Changed this to show a way different route
+    }
+    port_coordinates = {
+        "Port of Shanghai": [31.2304, 121.4737],
+        "Los Angeles Port": [33.7291, -118.2637],
+    }
+
+    origin_coords = port_coordinates["Port of Shanghai"]
+    destination_coords = port_coordinates["Los Angeles Port"]
+    prev_coords = route_coordinates["Route_3 (ports with cold storage)"]
+    updated_coords = route_coordinates["Route_7_Alternate (ports with cold storage)"]
+
+    # Initialize Folium map centered at the midpoint
+    midpoint = [
+        (origin_coords[0] + destination_coords[0]) / 2,
+        (origin_coords[1] + destination_coords[1]) / 2,
+    ]
+    folium_map = folium.Map(location=midpoint, zoom_start=1)
+
+    # Add markers for ports
+    folium.Marker(
+        location=origin_coords,
+        popup="Port of Origin: Port of Shanghai",
+        icon=folium.Icon(color="orange"),
+    ).add_to(folium_map)
+
+    folium.Marker(
+        location=destination_coords,
+        popup="Destination Port: Los Angeles Port",
+        icon=folium.Icon(color="blue"),
+    ).add_to(folium_map)
+
+    # Add previous route (in red)
+    folium.PolyLine(
+        locations=[origin_coords, prev_coords, destination_coords],
+        color="red",
+        weight=3,
+        tooltip="Previous Route",
+    ).add_to(folium_map)
+
+    # Add updated route (in green)
+    folium.PolyLine(
+        locations=[origin_coords, updated_coords, destination_coords],
+        color="green",
+        weight=3,
+        tooltip="Updated Route",
+    ).add_to(folium_map)
+
+    # Display the map
+    st.write("Map Visualization:")
+    st_folium(folium_map, height=450, use_container_width=True)
 
 def station_date():
     st.title("Dates information")
