@@ -146,14 +146,14 @@ def station_map():
     ],  # Changed this to show a way different route
     }
     port_coordinates = {
-        "Port of Shanghai": [31.2304, 121.4737],
-        "Los Angeles Port": [33.7291, -118.2637],
+        "Port of Shanghai": [44.833328,  -0.56667],
+        "Los Angeles Port": [48.8575475, 2.3513765],
     }
 
     origin_coords = port_coordinates["Port of Shanghai"]
     destination_coords = port_coordinates["Los Angeles Port"]
     prev_coords = route_coordinates["Route_3 (ports with cold storage)"]
-    updated_coords = route_coordinates["Route_7_Alternate (ports with cold storage)"]
+    #updated_coords = route_coordinates["Route_7_Alternate (ports with cold storage)"]
 
     # Initialize Folium map centered at the midpoint
     midpoint = [
@@ -165,31 +165,31 @@ def station_map():
     # Add markers for ports
     folium.Marker(
         location=origin_coords,
-        popup="Port of Origin: Port of Shanghai",
+        popup="Bordeaux St Jean",
         icon=folium.Icon(color="orange"),
     ).add_to(folium_map)
 
     folium.Marker(
         location=destination_coords,
-        popup="Destination Port: Los Angeles Port",
+        popup="Paris Est",
         icon=folium.Icon(color="blue"),
     ).add_to(folium_map)
 
     # Add previous route (in red)
     folium.PolyLine(
-        locations=[origin_coords, prev_coords, destination_coords],
+        locations=[origin_coords, destination_coords],
         color="red",
         weight=3,
         tooltip="Previous Route",
     ).add_to(folium_map)
 
-    # Add updated route (in green)
-    folium.PolyLine(
-        locations=[origin_coords, updated_coords, destination_coords],
-        color="green",
-        weight=3,
-        tooltip="Updated Route",
-    ).add_to(folium_map)
+    # # Add updated route (in green)
+    # folium.PolyLine(
+    #     locations=[origin_coords, destination_coords],
+    #     color="green",
+    #     weight=3,
+    #     tooltip="Updated Route",
+    # ).add_to(folium_map)
 
     # Display the map
     st.write("Map Visualization:")
