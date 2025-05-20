@@ -31,7 +31,7 @@ def get_biggest_delay_cause(df):
     rolling_stock_causes = get_mean_value_df(df, "Pct delay due to rolling stock")
     station_management_causes = get_mean_value_df(df, "Pct delay due to station management and equipment reuse")
     person_management_causes = get_mean_value_df(df, "Pct delay due to passenger handling (crowding, disabled persons, connections)")
-    causes_names = ["External cause", "Infrastructure cause", "Traffic management cause", "Rollign stock cause", "Station management cause", "Person management cause"]
+    causes_names = ["external issues", "infrastructure issues", "traffic management issues", "rollign stock issues", "station management issues", "person management issues"]
     causes = [external_causes, infrastructure_causes, traffic_management_causes, rolling_stock_causes, station_management_causes, person_management_causes]
     max_cause = max(causes)
     return (causes_names[causes.index(max_cause)], max_cause)
