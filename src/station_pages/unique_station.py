@@ -1,14 +1,14 @@
 import streamlit as st
-from st_circular_progress import CircularProgress
+import altair as alt
 import streamviz as sv
 import pandas as pd
-from src.station_pages.unique_station_data import get_values_per_station, get_route_info, get_all_infos
-from get_data import read_csv
 import folium
-from streamlit_folium import st_folium
 import random
+from st_circular_progress import CircularProgress
+from streamlit_folium import st_folium
+from src.station_pages.unique_station_data import get_values_per_station, get_route_info, get_all_infos, extract_monthly_metrics
+from get_data import read_csv
 from src.station_pages.table_data import clean_names, coor_station
-import altair as alt
 
 def generate_intermediate_coords(start_coord, end_coord, steps=12, jitter=0.1):
     """
@@ -95,24 +95,29 @@ def station_page():
             arTop=500/60
         )
 
-def styled_bar_chart(data, title, color1="#1f77b4", color2="#ff7f0e", label="Value"):
-    color_scale = alt.Scale(domain=["Route", "National mean"], range=[color1, color2])
+def styled_bar_chart(data: pd.DataFrame, title: str = "", label: str = ""):
 
-    chart = (
-        alt.Chart(data)
-        .mark_bar()
-        .encode(
-            y=alt.Y("Category:N", sort="-x", title=""),
-            x=alt.X("Value:Q", title=label),
-            color=alt.Color("Category:N", scale=color_scale, legend=None),
-            tooltip=["Category", "Value"]
-        )
-        .properties(height=120, title=title)
+    chart = alt.Chart(data).mark_bar(
+        size=20,  # ← largeur de barre explicite
+        cornerRadiusEnd=5  # petit arrondi stylé
+    ).encode(
+        y=alt.Y("Category:N", title="", sort=["Route", "National mean"]),
+        x=alt.X("Value:Q", title=label),
+        color=alt.Color("Category:N", scale=alt.Scale(
+            domain=["Route", "National mean"],
+            range=["#1f77b4", "#ff7f0e"]
+        )),
+        tooltip=[alt.Tooltip("Category:N"), alt.Tooltip("Value:Q", title=label)]
+    ).properties(
+        title=title,
+        height=100  # ← un peu de hauteur pour espacer les barres
     )
+
     return chart
 
 def station_map():
     st.title("Routes")
+
     df = pd.DataFrame({"Cities": clean_names})
 
     start_col, end_col = st.columns(2)
@@ -197,10 +202,27 @@ def station_map():
             use_container_width=True
         )
 
+years = ["2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025"]
+months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
 def station_date():
-    st.title("Dates information")
-    st.selectbox("Select a month", ["2018"])
+    st.title("Dates Information")
+
+    years_col, month_col = st.columns(2)
+    with years_col:
+        year = st.selectbox("Select a year", years, index=len(years)-1)
+    with month_col:
+        month = st.selectbox("Select a month", months)
+
+    month_index = months.index(month) + 1
+
+    result = extract_monthly_metrics(stats, int(year), month_index)
+
+    if "error" in result:
+        st.warning(result["error"])
+    else:
+        st.subheader(f"Data for {month} {year}")
+        st.json(result)
 
 def draw_buttons():
     col1, col2, col3 = st.columns(3, gap="large")

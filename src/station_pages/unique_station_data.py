@@ -10,6 +10,15 @@ def get_mean_value_df(df, column):
     mean_delay = sum(avg_delay) / len(avg_delay)
     return mean_delay
 
+def get_sum_value_df(df, column):
+    avg_delay = df[column].tolist()
+    try:
+        avg_delay = [float(elt) for elt in avg_delay]
+    except:
+        return 0
+    mean_delay = sum(avg_delay)
+    return mean_delay
+
 def get_ratio_scheduled_cancelled(df):
     scheduled = get_mean_value_df(df, "Number of scheduled trains")
     cancelled = get_mean_value_df(df, "Number of cancelled trains")
@@ -110,3 +119,28 @@ def get_all_infos(df: pd.DataFrame):
         "delay > 60": delay_bigger_than_sixty
     }
     return dic
+
+def extract_monthly_metrics(df, year, month):
+    try:
+        df["Date"] = pd.to_datetime(df["Date"], format="%Y-%m", errors="coerce")
+    except Exception as e:
+        return {"error": f"Failed to parse dates: {e}"}
+
+    df = df.dropna(subset=["Date"])
+
+    filtered_df = df[(df["Date"].dt.year == year) & (df["Date"].dt.month == month)]
+
+    if filtered_df.empty:
+        return {"error": f"Aucune donnée pour {year}-{str(month).zfill(2)}"}
+
+    result = {
+        "Total scheduled trains": int(get_sum_value_df(filtered_df, "Number of cancelled trains")),
+        "Cancelled trains": int(get_sum_value_df(filtered_df, "Number of cancelled trains")),
+        "Cancellation rate (%)": round(
+            100 * get_sum_value_df(filtered_df, "Number of cancelled trains")
+            / get_sum_value_df(filtered_df, "Number of scheduled trains"), 2
+        ),
+        "Average delay of all arrivals (min)": round(get_mean_value_df(filtered_df, "Average delay of all trains at arrival"), 2),
+    }
+
+    return result
