@@ -107,19 +107,6 @@ def get_route_info(start, end, df: pd.DataFrame):
 
     return dic
 
-def get_all_infos(df: pd.DataFrame):
-    mean_journey_time = get_mean_value_df(df, "Average journey time" )
-    mean_delay = get_mean_value_df(df, "Average delay of all trains at departure")
-    delay_bigger_than_sixty = get_mean_value_df(df, "Number of trains delayed > 60min")
-
-    dic = {
-        "Average journey time": round(mean_journey_time, 2),
-        "Average delay": round(mean_delay, 2),
-        "Biggest delay cause": get_biggest_delay_cause(df),
-        "delay > 60": delay_bigger_than_sixty
-    }
-    return dic
-
 def extract_monthly_metrics(df, year, month):
     try:
         df["Date"] = pd.to_datetime(df["Date"], format="%Y-%m", errors="coerce")
@@ -144,3 +131,81 @@ def extract_monthly_metrics(df, year, month):
     }
 
     return (result)
+
+def get_station_with_most_dest(df: pd.DataFrame):
+    departure_stats = df.groupby("Departure station")["Arrival station"].nunique()
+
+    # On chope la station avec le max
+    top_station = departure_stats.idxmax()
+    top_count = departure_stats.max()
+    return (top_station, top_count)
+
+def top_scheduled_departure_stations(df, top_n=3):
+    if "Departure station" not in df.columns or "Number of scheduled trains" not in df.columns:
+        return pd.DataFrame({"error": ["Colonnes manquantes dans la dataframe"]})
+
+    scheduled_counts = (
+        df.groupby("Departure station")["Number of scheduled trains"]
+        .sum()
+        .sort_values(ascending=False)
+        .head(top_n)
+        .reset_index()
+        .rename(columns={"Number of scheduled trains": "Total scheduled trains"})
+    )
+
+    return scheduled_counts
+
+def top_cancelled_departure_stations(df, top_n=3):
+    if "Departure station" not in df.columns or "Number of cancelled trains" not in df.columns:
+        return pd.DataFrame({"error": ["Colonnes manquantes dans la dataframe"]})
+
+    cancelled_counts = (
+        df.groupby("Departure station")["Number of cancelled trains"]
+        .sum()
+        .sort_values(ascending=False)
+        .head(top_n)
+        .reset_index()
+        .rename(columns={"Number of cancelled trains": "Total cancelled trains"})
+    )
+
+    return cancelled_counts
+
+def top_avg_journey_time_stations(df, top_n=3):
+    if "Departure station" not in df.columns or "Average journey time" not in df.columns:
+        return pd.DataFrame({"error": ["Colonnes manquantes dans la dataframe"]})
+
+    df_clean = df.copy()
+    df_clean["Average journey time"] = pd.to_numeric(df_clean["Average journey time"], errors="coerce")
+
+    avg_times = (
+        df_clean.groupby("Departure station")["Average journey time"]
+        .mean()
+        .sort_values(ascending=False)
+        .head(top_n)
+        .reset_index()
+        .rename(columns={"Average journey time": "Avg journey time (min)"})
+    )
+
+    return avg_times
+
+
+def get_all_infos(df: pd.DataFrame):
+    mean_journey_time = get_mean_value_df(df, "Average journey time" )
+    mean_delay = get_mean_value_df(df, "Average delay of all trains at departure")
+    delay_bigger_than_sixty = get_mean_value_df(df, "Number of trains delayed > 60min")
+    top_station_dest = get_station_with_most_dest(df)
+    top_sched_train = top_scheduled_departure_stations(df)
+    top_canc_train = top_cancelled_departure_stations(df)
+    top_avg_journey_train = top_avg_journey_time_stations(df)
+
+    dic = {
+        "Average journey time": round(mean_journey_time, 2),
+        "Average delay": round(mean_delay, 2),
+        "Biggest delay cause": get_biggest_delay_cause(df),
+        "delay > 60": delay_bigger_than_sixty,
+        "Station with most destinations": top_station_dest,
+        "Top 3 stations with most trains scheduled": top_sched_train,
+        "Top 3 stations with most trains cancelled": top_canc_train,
+        "Top 3 stations with most average journey time": top_avg_journey_train,
+    }
+    return dic
