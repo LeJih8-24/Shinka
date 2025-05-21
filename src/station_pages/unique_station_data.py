@@ -138,7 +138,7 @@ def extract_monthly_metrics(df, year, month):
         "Cancelled trains": int(get_sum_value_df(filtered_df, "Number of cancelled trains")),
         "Cancellation rate (%)": round(
             100 * get_sum_value_df(filtered_df, "Number of cancelled trains")
-            / get_sum_value_df(filtered_df, "Number of scheduled trains"), 2
+            / get_sum_value_df(filtered_df, "Number of scheduled trains")
         ),
         "Average delay of all arrivals (min)": round(get_mean_value_df(filtered_df, "Average delay of all trains at arrival"), 2),
     }

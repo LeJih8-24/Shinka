@@ -223,6 +223,13 @@ def station_date():
     else:
         st.subheader(f"Data for {month} {year}")
         st.json(result)
+        scheduled_ratio = CircularProgress(
+            label="Cancellation rate (%)",
+            value=result["Cancellation rate (%)"],
+            key="scheduled_ratio",
+            size="medium")
+        scheduled_ratio.update_value(result["Cancellation rate (%)"])
+        scheduled_ratio.st_circular_progress()
 
 def draw_buttons():
     col1, col2, col3 = st.columns(3, gap="large")
