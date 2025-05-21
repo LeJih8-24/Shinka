@@ -51,3 +51,62 @@ def get_values_per_station(df: pd.DataFrame, station_name):
         "Biggest delay cause": biggest_cause,
         }
     return dic_station
+
+def get_mean_times_for_route(df: pd.DataFrame, start: str, end: str):
+    # On filtre dans les deux sens
+    route_df = df.loc[
+        ((df['Departure station'] == start) & (df['Arrival station'] == end)) |
+        ((df['Departure station'] == end) & (df['Arrival station'] == start))
+    ]
+
+    # On calcule les moyennes
+    mean_journey_time = route_df["Average journey time"].mean()
+    mean_delay_time = route_df["Average delay time"].mean()
+    ratio_schedule = route_df["Number of scheduled trains"].mean()
+    ratio_cancel = route_df["Number cancelled trains"].mean()
+
+    return {
+        "Average journey time": mean_journey_time,
+        "Average delay time": mean_delay_time,
+        "Ratio": ratio_cancel * 100 / ratio_schedule
+    }
+
+
+def get_route_info(start, end, df: pd.DataFrame):
+    # Inverser si les données sont dans l'autre sens
+    if not df.loc[(df['Departure station'] == end) & (df['Arrival station'] == start)].empty:
+        start, end = end, start  # switch baby
+
+    # Filtrage dans les deux sens
+    station_lines = df.loc[
+        ((df['Departure station'] == start) & (df['Arrival station'] == end)) |
+        ((df['Departure station'] == end) & (df['Arrival station'] == start))
+    ]
+
+    # Si c'est vide, on retourne 1
+    if station_lines.empty:
+        return 1
+
+    # Calcul des moyennes
+    mean_journey_time = get_mean_value_df(station_lines, "Average journey time" )
+    mean_delay = get_mean_value_df(station_lines, "Average delay of all trains at departure")
+
+    dic = {
+        "Average journey time": round(mean_journey_time, 2),
+        "Average delay": round(mean_delay, 2),
+    }
+
+    return dic
+
+def get_all_infos(df: pd.DataFrame):
+    mean_journey_time = get_mean_value_df(df, "Average journey time" )
+    mean_delay = get_mean_value_df(df, "Average delay of all trains at departure")
+    delay_bigger_than_sixty = get_mean_value_df(df, "Number of trains delayed > 60min")
+
+    dic = {
+        "Average journey time": round(mean_journey_time, 2),
+        "Average delay": round(mean_delay, 2),
+        "Biggest delay cause": get_biggest_delay_cause(df),
+        "delay > 60": delay_bigger_than_sixty
+    }
+    return dic

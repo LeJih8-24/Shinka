@@ -2,12 +2,13 @@ import streamlit as st
 from st_circular_progress import CircularProgress
 import streamviz as sv
 import pandas as pd
-from src.station_pages.unique_station_data import get_values_per_station
+from src.station_pages.unique_station_data import get_values_per_station, get_route_info, get_all_infos
 from get_data import read_csv
 import folium
 from streamlit_folium import st_folium
 import random
 from src.station_pages.table_data import clean_names, coor_station
+import altair as alt
 
 def generate_intermediate_coords(start_coord, end_coord, steps=12, jitter=0.1):
     """
@@ -94,9 +95,24 @@ def station_page():
             arTop=500/60
         )
 
+def styled_bar_chart(data, title, color1="#1f77b4", color2="#ff7f0e", label="Value"):
+    color_scale = alt.Scale(domain=["Route", "National mean"], range=[color1, color2])
+
+    chart = (
+        alt.Chart(data)
+        .mark_bar()
+        .encode(
+            y=alt.Y("Category:N", sort="-x", title=""),
+            x=alt.X("Value:Q", title=label),
+            color=alt.Color("Category:N", scale=color_scale, legend=None),
+            tooltip=["Category", "Value"]
+        )
+        .properties(height=120, title=title)
+    )
+    return chart
 
 def station_map():
-    st.title("Maps")
+    st.title("Routes")
     df = pd.DataFrame({"Cities": clean_names})
 
     start_col, end_col = st.columns(2)
@@ -105,6 +121,15 @@ def station_map():
     with end_col:
         end = st.selectbox("Select an arrival station", df["Cities"], key="end_station")
 
+    route_info = get_route_info(start, end, stats)
+    try:
+        if (route_info == 1):
+            st.title("There is no routes for those stations")
+            return 0
+    except Exception as e:
+        if not e:
+            print(e)
+        
     st.write(f"Here is the information for the route: {start} - {end}")
 
     # Init state for previous values and coords
@@ -132,28 +157,50 @@ def station_map():
     folium.Marker(
         location=coor_station[start],
         popup=start,
-        icon=folium.Icon(color="orange"),
+        icon=folium.Icon(color="red"),
     ).add_to(folium_map)
 
     folium.Marker(
         location=coor_station[end],
         popup=end,
-        icon=folium.Icon(color="blue"),
+        icon=folium.Icon(color="green"),
     ).add_to(folium_map)
 
     folium.PolyLine(
         locations=st.session_state.generated_coords,
-        color="red",
+        color="blue",
         weight=3,
         tooltip="Previous Route",
     ).add_to(folium_map)
 
-    st.write("Map Visualization:")
-    st_folium(folium_map, height=450, use_container_width=True)
+    st.write("Map:")
+    map, average_route = st.columns(2)
+    with map:
+        st_folium(folium_map, height=450, use_container_width=True)
+    with average_route:
+        c = st.container(border=True)
+        with c:
+            chart_data_journey = pd.DataFrame({
+                "Category": ["Route", "National mean"],
+                "Value": [route_info["Average journey time"], all_info["Average journey time"]],
+        })
+            chart_data_delay = pd.DataFrame({
+                "Category": ["Route", "National mean"],
+                "Value": [route_info["Average delay"], all_info["Average delay"]],
+        })
+        st.altair_chart(
+            styled_bar_chart(chart_data_journey, title="Average Journey Time (min)", label="Minutes"),
+            use_container_width=True
+        )
+        st.altair_chart(
+            styled_bar_chart(chart_data_delay, title="Average Delay (min)", label="Minutes"),
+            use_container_width=True
+        )
 
 
 def station_date():
     st.title("Dates information")
+    st.selectbox("Select a month", ["2018"])
 
 def draw_buttons():
     col1, col2, col3 = st.columns(3, gap="large")
@@ -165,7 +212,7 @@ def draw_buttons():
 
     with col2:
         style_btn()
-        if st.button("Stations maps", key="btn_station_map"):
+        if st.button("Route infos", key="btn_station_map"):
             st.session_state["page"] = "station_map"
 
     with col3:
@@ -176,7 +223,7 @@ def draw_buttons():
 
 def style_btn():
     bg_color = "grey"
-    hover_color = "black"  # couleur au survol
+    hover_color = "black"
 
     st.markdown(
         f"""
@@ -207,6 +254,7 @@ if "page" not in st.session_state:
     st.session_state["page"] = "station_page"
 
 stats = read_csv("cleaned_dataset.csv")
+all_info = get_all_infos(stats)
 draw_buttons()
 
 page = st.session_state["page"]
