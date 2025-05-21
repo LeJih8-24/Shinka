@@ -41,7 +41,7 @@ def station_page():
     df = pd.DataFrame({"Cities": clean_names})
     option = st.selectbox("Select a station", df["Cities"])
     st.write("Here is the informations for the station:", option)
-    nat_ratio_col, sched_ratio_col, delay_cause_col = st.columns(3)
+    nat_ratio_col, sched_ratio_col, delay_cause_col = st.columns(3, border=True)
     dic = get_values_per_station(stats, option)
     with nat_ratio_col:
         national_ratio = CircularProgress(
@@ -101,17 +101,12 @@ def styled_bar_chart(data: pd.DataFrame, title: str = "", label: str = ""):
         size=20,  # ← largeur de barre explicite
         cornerRadiusEnd=5  # petit arrondi stylé
     ).encode(
-        y=alt.Y("Category:N", title="", sort=["Route", "National mean"]),
-        x=alt.X("Value:Q", title=label),
-        color=alt.Color("Category:N", scale=alt.Scale(
+        y=alt.Y("category:N", title="", sort=["Route", "National mean"]),
+        x=alt.X("value:Q", title=label),
+        color=alt.Color("category:N", scale=alt.Scale(
             domain=["Route", "National mean"],
             range=["#1f77b4", "#ff7f0e"]
-        )),
-        tooltip=[alt.Tooltip("Category:N"), alt.Tooltip("Value:Q", title=label)]
-    ).properties(
-        title=title,
-        height=100  # ← un peu de hauteur pour espacer les barres
-    )
+        )))    
 
     return chart
 
@@ -120,7 +115,7 @@ def station_map():
 
     df = pd.DataFrame({"Cities": clean_names})
 
-    start_col, end_col = st.columns(2)
+    start_col, end_col = st.columns(2, border=True)
     with start_col:
         start = st.selectbox("Select a departure station", df["Cities"], key="start_station")
     with end_col:
@@ -134,8 +129,9 @@ def station_map():
     except Exception as e:
         if not e:
             print(e)
-        
-    st.write(f"Here is the information for the route: {start} - {end}")
+    
+    st.subheader(f'Here is the information for the route:')
+    st.subheader(f'\n:red[{start}] - :green[{end}]')
 
     # Init state for previous values and coords
     if "previous_start" not in st.session_state:
@@ -178,7 +174,6 @@ def station_map():
         tooltip="Previous Route",
     ).add_to(folium_map)
 
-    st.write("Map:")
     map, average_route = st.columns(2)
     with map:
         st_folium(folium_map, height=450, use_container_width=True)
@@ -186,24 +181,40 @@ def station_map():
         c = st.container(border=True)
         with c:
             chart_data_journey = pd.DataFrame({
-                "Category": ["Route", "National mean"],
-                "Value": [route_info["Average journey time"], all_info["Average journey time"]],
+                "category": ["Route", "National mean"],
+                "value": [route_info["Average journey time"], all_info["Average journey time"]],
         })
             chart_data_delay = pd.DataFrame({
-                "Category": ["Route", "National mean"],
-                "Value": [route_info["Average delay"], all_info["Average delay"]],
+                "category": ["Route", "National mean"],
+                "value": [route_info["Average delay"], all_info["Average delay"]],
         })
-        st.altair_chart(
+            st.write("Average Journey Time (min)")
+            st.altair_chart(
             styled_bar_chart(chart_data_journey, title="Average Journey Time (min)", label="Minutes"),
             use_container_width=True
         )
-        st.altair_chart(
+            st.write("Average Delay (min)")
+            st.altair_chart(
             styled_bar_chart(chart_data_delay, title="Average Delay (min)", label="Minutes"),
             use_container_width=True
         )
 
 years = ["2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025"]
 months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+
+def calc_new_year(year, month_index):
+    new_year = year
+    if month_index == 1:
+        return new_year - 1, 12
+    return new_year, month_index - 1
+
+def calc_delta_values(post_val, ant_val, expr="%"):
+    val = ""
+    if expr == "%":
+        val = str(round(((post_val / ant_val) - 1) * 100, 2)) + expr
+    else:
+        val = str(post_val - ant_val) + expr
+    return val
 
 def station_date():
     st.title("Dates Information")
@@ -217,12 +228,35 @@ def station_date():
     month_index = months.index(month) + 1
 
     result = extract_monthly_metrics(stats, int(year), month_index)
+    new_year, new_month_index = calc_new_year(int(year), month_index)
+    result_before = extract_monthly_metrics(stats, new_year, new_month_index)
 
     if "error" in result:
         st.warning(result["error"])
     else:
         st.subheader(f"Data for {month} {year}")
-        st.json(result)
+        sched_trains, canc_trains, delay = st.columns(3, border=True)
+        sched_trains.metric(label="Scheduled Trains", value=str(result["Total scheduled trains"]), delta=calc_delta_values(result["Total scheduled trains"], result_before["Total scheduled trains"]))
+        canc_trains.metric(label="Cancelled Trains", value=str(result["Cancelled trains"]), delta=calc_delta_values(result["Cancelled trains"], result_before["Cancelled trains"]))
+        delay.metric(label="Average delay of all arrivals (min)", value=str(result["Average delay of all arrivals (min)"]), delta=calc_delta_values(result["Average delay of all arrivals (min)"], result_before["Average delay of all arrivals (min)"]))
+        scheduled_ratio = CircularProgress(
+            label="Cancellation rate (%)",
+            value=result["Cancellation rate (%)"],
+            key="scheduled_ratio",
+            size="large")
+        scheduled_ratio.update_value(result["Cancellation rate (%)"])
+        scheduled_ratio.st_circular_progress()
+    taux_de_caca()
+
+def taux_de_caca():
+    taux_caca = CircularProgress(
+        label="Taux de caca",
+        value=100,
+        key="taux_caca",
+        size="large",
+        color="#663C1F")
+    taux_caca.update_value(100)
+    taux_caca.st_circular_progress()
 
 def draw_buttons():
     col1, col2, col3 = st.columns(3, gap="large")
