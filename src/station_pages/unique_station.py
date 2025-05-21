@@ -129,8 +129,9 @@ def station_map():
     except Exception as e:
         if not e:
             print(e)
-        
-    st.write(f"Here is the information for the route: {start} - {end}")
+    
+    st.subheader(f'Here is the information for the route:')
+    st.subheader(f'\n:red[{start}] - :green[{end}]')
 
     # Init state for previous values and coords
     if "previous_start" not in st.session_state:
@@ -188,10 +189,12 @@ def station_map():
                 "category": ["Route", "National mean"],
                 "value": [route_info["Average delay"], all_info["Average delay"]],
         })
+            st.write("Average Journey Time (min)")
             st.altair_chart(
             styled_bar_chart(chart_data_journey, title="Average Journey Time (min)", label="Minutes"),
             use_container_width=True
         )
+            st.write("Average Delay (min)")
             st.altair_chart(
             styled_bar_chart(chart_data_delay, title="Average Delay (min)", label="Minutes"),
             use_container_width=True
