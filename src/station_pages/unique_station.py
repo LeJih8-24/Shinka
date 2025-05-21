@@ -174,7 +174,6 @@ def station_map():
         tooltip="Previous Route",
     ).add_to(folium_map)
 
-    st.write("Map:")
     map, average_route = st.columns(2)
     with map:
         st_folium(folium_map, height=450, use_container_width=True)
