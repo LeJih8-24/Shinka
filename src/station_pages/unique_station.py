@@ -101,17 +101,12 @@ def styled_bar_chart(data: pd.DataFrame, title: str = "", label: str = ""):
         size=20,  # ← largeur de barre explicite
         cornerRadiusEnd=5  # petit arrondi stylé
     ).encode(
-        y=alt.Y("Category:N", title="", sort=["Route", "National mean"]),
-        x=alt.X("Value:Q", title=label),
-        color=alt.Color("Category:N", scale=alt.Scale(
+        y=alt.Y("category:N", title="", sort=["Route", "National mean"]),
+        x=alt.X("value:Q", title=label),
+        color=alt.Color("category:N", scale=alt.Scale(
             domain=["Route", "National mean"],
             range=["#1f77b4", "#ff7f0e"]
-        )),
-        tooltip=[alt.Tooltip("Category:N"), alt.Tooltip("Value:Q", title=label)]
-    ).properties(
-        title=title,
-        height=100  # ← un peu de hauteur pour espacer les barres
-    )
+        )))    
 
     return chart
 
@@ -186,12 +181,12 @@ def station_map():
         c = st.container(border=True)
         with c:
             chart_data_journey = pd.DataFrame({
-                "Category": ["Route", "National mean"],
-                "Value": [route_info["Average journey time"], all_info["Average journey time"]],
+                "category": ["Route", "National mean"],
+                "value": [route_info["Average journey time"], all_info["Average journey time"]],
         })
             chart_data_delay = pd.DataFrame({
-                "Category": ["Route", "National mean"],
-                "Value": [route_info["Average delay"], all_info["Average delay"]],
+                "category": ["Route", "National mean"],
+                "value": [route_info["Average delay"], all_info["Average delay"]],
         })
             st.altair_chart(
             styled_bar_chart(chart_data_journey, title="Average Journey Time (min)", label="Minutes"),
