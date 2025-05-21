@@ -246,9 +246,20 @@ def station_date():
             label="Cancellation rate (%)",
             value=result["Cancellation rate (%)"],
             key="scheduled_ratio",
-            size="medium")
+            size="large")
         scheduled_ratio.update_value(result["Cancellation rate (%)"])
         scheduled_ratio.st_circular_progress()
+    taux_de_caca()
+
+def taux_de_caca():
+    taux_caca = CircularProgress(
+        label="Taux de caca",
+        value=100,
+        key="taux_caca",
+        size="large",
+        color="#663C1F")
+    taux_caca.update_value(100)
+    taux_caca.st_circular_progress()
 
 def draw_buttons():
     col1, col2, col3 = st.columns(3, gap="large")
