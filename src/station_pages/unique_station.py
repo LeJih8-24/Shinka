@@ -41,7 +41,7 @@ def station_page():
     df = pd.DataFrame({"Cities": clean_names})
     option = st.selectbox("Select a station", df["Cities"])
     st.write("Here is the informations for the station:", option)
-    nat_ratio_col, sched_ratio_col, delay_cause_col = st.columns(3)
+    nat_ratio_col, sched_ratio_col, delay_cause_col = st.columns(3, border=True)
     dic = get_values_per_station(stats, option)
     with nat_ratio_col:
         national_ratio = CircularProgress(
@@ -120,7 +120,7 @@ def station_map():
 
     df = pd.DataFrame({"Cities": clean_names})
 
-    start_col, end_col = st.columns(2)
+    start_col, end_col = st.columns(2, border=True)
     with start_col:
         start = st.selectbox("Select a departure station", df["Cities"], key="start_station")
     with end_col:
@@ -193,17 +193,31 @@ def station_map():
                 "Category": ["Route", "National mean"],
                 "Value": [route_info["Average delay"], all_info["Average delay"]],
         })
-        st.altair_chart(
+            st.altair_chart(
             styled_bar_chart(chart_data_journey, title="Average Journey Time (min)", label="Minutes"),
             use_container_width=True
         )
-        st.altair_chart(
+            st.altair_chart(
             styled_bar_chart(chart_data_delay, title="Average Delay (min)", label="Minutes"),
             use_container_width=True
         )
 
 years = ["2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025"]
 months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+
+def calc_new_year(year, month_index):
+    new_year = year
+    if month_index == 1:
+        return new_year - 1, 12
+    return new_year, month_index - 1
+
+def calc_delta_values(post_val, ant_val, expr="%"):
+    val = ""
+    if expr == "%":
+        val = str(round(((post_val / ant_val) - 1) * 100, 2)) + expr
+    else:
+        val = str(post_val - ant_val) + expr
+    return val
 
 def station_date():
     st.title("Dates Information")
@@ -217,12 +231,17 @@ def station_date():
     month_index = months.index(month) + 1
 
     result = extract_monthly_metrics(stats, int(year), month_index)
+    new_year, new_month_index = calc_new_year(int(year), month_index)
+    result_before = extract_monthly_metrics(stats, new_year, new_month_index)
 
     if "error" in result:
         st.warning(result["error"])
     else:
         st.subheader(f"Data for {month} {year}")
-        st.json(result)
+        sched_trains, canc_trains, delay = st.columns(3, border=True)
+        sched_trains.metric(label="Scheduled Trains", value=str(result["Total scheduled trains"]), delta=calc_delta_values(result["Total scheduled trains"], result_before["Total scheduled trains"]))
+        canc_trains.metric(label="Cancelled Trains", value=str(result["Cancelled trains"]), delta=calc_delta_values(result["Cancelled trains"], result_before["Cancelled trains"]))
+        delay.metric(label="Average delay of all arrivals (min)", value=str(result["Average delay of all arrivals (min)"]), delta=calc_delta_values(result["Average delay of all arrivals (min)"], result_before["Average delay of all arrivals (min)"]))
         scheduled_ratio = CircularProgress(
             label="Cancellation rate (%)",
             value=result["Cancellation rate (%)"],

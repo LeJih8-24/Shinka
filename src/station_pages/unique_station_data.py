@@ -134,7 +134,7 @@ def extract_monthly_metrics(df, year, month):
         return {"error": f"Aucune donnée pour {year}-{str(month).zfill(2)}"}
 
     result = {
-        "Total scheduled trains": int(get_sum_value_df(filtered_df, "Number of cancelled trains")),
+        "Total scheduled trains": int(get_sum_value_df(filtered_df, "Number of scheduled trains")),
         "Cancelled trains": int(get_sum_value_df(filtered_df, "Number of cancelled trains")),
         "Cancellation rate (%)": round(
             100 * get_sum_value_df(filtered_df, "Number of cancelled trains")
@@ -143,4 +143,4 @@ def extract_monthly_metrics(df, year, month):
         "Average delay of all arrivals (min)": round(get_mean_value_df(filtered_df, "Average delay of all trains at arrival"), 2),
     }
 
-    return result
+    return (result)
