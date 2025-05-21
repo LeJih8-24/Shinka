@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+from src.settings import admin_page
 
 def tableaux():
     # Tableau modulable avec des tris qui se font automatiquement (streamlit c'est vraiment sexy ptn)
@@ -127,11 +128,10 @@ def exemple_load_pages():
 
 
 def call_pages():
-    admin_page = st.Page("src/settings.py", title="Settings")
     home_page = st.Page("src/home.py", title="Home")
     station_page = st.Page("src/station_pages/unique_station.py", title="Station infos")
-    pg = st.navigation({"App": [home_page, station_page], "Tools": [admin_page]})
+    pg = st.navigation({"App": [home_page, station_page], "Tools": []})
     pg.run()
 
-
+admin_page()
 call_pages()
