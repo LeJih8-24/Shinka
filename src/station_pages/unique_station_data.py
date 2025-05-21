@@ -140,53 +140,71 @@ def get_station_with_most_dest(df: pd.DataFrame):
     top_count = departure_stats.max()
     return (top_station, top_count)
 
-def top_scheduled_departure_stations(df, top_n=3):
+def top_scheduled_departure_stations(df: pd.DataFrame, top_n: int = 3) -> pd.DataFrame:
     if "Departure station" not in df.columns or "Number of scheduled trains" not in df.columns:
         return pd.DataFrame({"error": ["Colonnes manquantes dans la dataframe"]})
 
+    df_clean = df.copy()
+
+    df_clean["Number of scheduled trains"] = pd.to_numeric(
+        df_clean["Number of scheduled trains"], errors="coerce"
+    )
+
+    df_clean = df_clean.dropna(subset=["Departure station", "Number of scheduled trains"])
+
     scheduled_counts = (
-        df.groupby("Departure station")["Number of scheduled trains"]
+        df_clean.groupby("Departure station", as_index=False)["Number of scheduled trains"]
         .sum()
-        .sort_values(ascending=False)
+        .sort_values(by="Number of scheduled trains", ascending=False)
         .head(top_n)
-        .reset_index()
         .rename(columns={"Number of scheduled trains": "Total scheduled trains"})
     )
 
     return scheduled_counts
 
-def top_cancelled_departure_stations(df, top_n=3):
-    if "Departure station" not in df.columns or "Number of cancelled trains" not in df.columns:
+
+def top_cancelled_departure_stations(df: pd.DataFrame, top_n: int = 3) -> pd.DataFrame:
+    df_clean = df.copy()
+
+    if "Departure station" not in df_clean.columns or "Number of cancelled trains" not in df_clean.columns:
         return pd.DataFrame({"error": ["Colonnes manquantes dans la dataframe"]})
 
-    cancelled_counts = (
-        df.groupby("Departure station")["Number of cancelled trains"]
+    df_clean["Number of cancelled trains"] = pd.to_numeric(
+        df_clean["Number of cancelled trains"], errors="coerce"
+    )
+
+    df_clean = df_clean.dropna(subset=["Departure station", "Number of cancelled trains"])
+
+    top_cancelled = (
+        df_clean.groupby("Departure station", as_index=False)["Number of cancelled trains"]
         .sum()
-        .sort_values(ascending=False)
+        .sort_values(by="Number of cancelled trains", ascending=False)
         .head(top_n)
-        .reset_index()
         .rename(columns={"Number of cancelled trains": "Total cancelled trains"})
     )
 
-    return cancelled_counts
+    return top_cancelled
 
-def top_avg_journey_time_stations(df, top_n=3):
+def top_avg_journey_time_stations(df: pd.DataFrame, top_n: int = 3) -> pd.DataFrame:
     if "Departure station" not in df.columns or "Average journey time" not in df.columns:
         return pd.DataFrame({"error": ["Colonnes manquantes dans la dataframe"]})
 
     df_clean = df.copy()
+
     df_clean["Average journey time"] = pd.to_numeric(df_clean["Average journey time"], errors="coerce")
 
+    df_clean = df_clean.dropna(subset=["Departure station", "Average journey time"])
+
     avg_times = (
-        df_clean.groupby("Departure station")["Average journey time"]
+        df_clean.groupby("Departure station", as_index=False)["Average journey time"]
         .mean()
-        .sort_values(ascending=False)
+        .sort_values(by="Average journey time", ascending=False)
         .head(top_n)
-        .reset_index()
         .rename(columns={"Average journey time": "Avg journey time (min)"})
     )
 
     return avg_times
+
 
 
 def get_all_infos(df: pd.DataFrame):
