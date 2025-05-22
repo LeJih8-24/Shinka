@@ -49,9 +49,9 @@ def predict_next_month(csv_path):
     moyenne_predite = round(y_pred.mean(), 2)
     moyenne_reelle = round(y_test.mean(), 2)
 
-    print(f"Mois testé : {last_month}")
-    print(f"Moyenne prédite : {moyenne_predite} minutes")
-    print(f"Moyenne réelle   : {moyenne_reelle} minutes")
+    # print(f"Mois testé : {last_month}")
+    # print(f"Moyenne prédite : {moyenne_predite} minutes")
+    # print(f"Moyenne réelle   : {moyenne_reelle} minutes")
 
     #Graphique
     #plt.figure(figsize=(6, 4))
@@ -60,6 +60,9 @@ def predict_next_month(csv_path):
     #plt.ylabel("Retard moyen (minutes)")
     #plt.grid(axis="y")
     #plt.show()
+    dic = {"test month": last_month,
+           "predict mean": moyenne_predite}
+    return dic
 
 if __name__ == "__main__":
     chemin_csv = "dataset.csv"
