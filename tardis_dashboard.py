@@ -129,8 +129,10 @@ def exemple_load_pages():
 
 def call_pages():
     home_page = st.Page("src/home.py", title="Home")
-    station_page = st.Page("src/station_pages/unique_station.py", title="Station infos")
-    pg = st.navigation({"App": [home_page, station_page], "Tools": []})
+    station_page = st.Page("src/station_pages/station_infos.py", title="Station infos")
+    station_routes = st.Page("src/station_pages/station_routes.py", title="Station routes")
+    station_map = st.Page("src/station_pages/station_map.py", title="Station map")
+    pg = st.navigation({"Stats": [home_page, station_page, station_routes, station_map]})
     pg.run()
 
 admin_page()
