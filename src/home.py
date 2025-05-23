@@ -8,51 +8,52 @@ import matplotlib.pyplot as plt
 from src.station_pages.unique_station_data import get_all_infos
 from get_data import read_csv
 from train_linear_regression import predict_next_month
+from src.language_dic import language_dic
 
-def apply_dark_mode():
-    st.markdown(
-        """
-        <style>
-            body {
-                background-color: #111111;
-                color: white;
-            }
-            .stApp {
-                background-color: #111111;
-            }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
+def set_custom_style():
+    st.markdown("""
+    <style>
+        html, body, .stApp {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f9fafa;
+            color: #111;
+        }
 
-def apply_white_mode():
-    st.markdown(
-        """
-        <style>
-            body {
-                background-color: white;
-                color: black;
-            }
-            .stApp {
-                background-color: white;
-                color: black;
-            }
-            /* Boutons, sliders, etc. */
-            .css-1cpxqw2, .css-1v0mbdj, .css-1offfwp {
-                background-color: #f0f2f6 !important;
-                color: black !important;
-            }
-            .css-1aumxhk {
-                color: black !important;
-            }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
+        .block-container {
+            padding: 2rem 3rem;
+        }
+
+        h1, h2, h3 {
+            color: #022e5a;
+        }
+
+        .metric-label, .metric-container {
+            color: #022e5a !important;
+        }
+
+        .stProgress > div > div {
+            background-color: #022e5a;
+        }
+
+        .stMetric {
+            background-color: #e5ecf3;
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+
+        .stInfo {
+            background-color: #dfeffc;
+            border-left: 5px solid #022e5a;
+            padding: 1rem;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+    </style>
+    """, unsafe_allow_html=True)
 
 def display_bar_chart(data, title, metric_name):
     df = pd.DataFrame(data, columns=["Departure station", metric_name])
-    chart = alt.Chart(df).mark_bar().encode(
+    chart = alt.Chart(df).mark_bar(color="#03488C").encode(
         x=alt.X("Departure station", sort="-y"),
         y=metric_name,
         tooltip=["Departure station", metric_name]
@@ -83,7 +84,7 @@ def display_delay_correlation_heatmap(df: pd.DataFrame):
 
     corr_matrix = df_clean[delay_cols].corr()
 
-    plt.figure(figsize=(10, 8))
+    fig, ax = plt.subplots(figsize=(10, 8))
     sns.heatmap(
         corr_matrix,
         annot=True,
@@ -92,40 +93,50 @@ def display_delay_correlation_heatmap(df: pd.DataFrame):
         vmax=0.05,
         square=True,
         linewidths=0.5,
-        cbar_kws={"shrink": 0.75}
+        cbar_kws={"shrink": 0.75},
+        ax=ax
     )
-    plt.title("Correlation between Delay Causes", fontsize=16)
+    ax.set_title("Correlation between Delay Causes", fontsize=16)
     plt.xticks(rotation=45, ha="right")
     plt.yticks(rotation=0)
-
-    st.pyplot(plt)
+    st.pyplot(fig)
 
 def home_page():
 
-    st.title("Main page")
+    set_custom_style()
+    st.title(language_dic[st.session_state["language"]]["home_title"])
+
     stats = read_csv("cleaned_dataset.csv")
     dic = get_all_infos(stats)
-    train_sched, train_canc, avg_journey_time = st.columns(3, border=True)
     pred = predict_next_month("cleaned_dataset.csv")
-    with train_sched:
-        display_bar_chart(dic["Top 3 stations with most trains scheduled"], "Top Stations - Scheduled Trains", "Total scheduled trains")
-    with train_canc:
-        display_bar_chart(dic["Top 3 stations with most trains cancelled"], "Top Stations - Cancelled Trains", "Total cancelled trains")
-    with avg_journey_time:      
-        display_bar_chart(dic["Top 3 stations with most average journey time"], "Top Stations - Avg Journey Time", "Avg journey time (min)")
-    col1, col2, col3 = st.columns(3, border=True)
-    with col1:
-        st.metric("Average journey time (hours)", value=str(round(dic["Average journey time"] / 60, 1)) + "h")
-    with col2:
-        st.metric("Average delay (min)", value=str(dic["Average delay"]) + "m")
-    with col3:
-        st.metric(f"Prediction of the delay next month", value=str(pred["predict mean"]) + "m")
-    with st.container():
-        st.subheader("Percentage of delays where delay > 60mn")
-        st.progress(min(dic["delay > 60"] / 100, 1.0))
-    st.subheader("Top Delay Cause")
-    st.info(f"Main cause of delay: **{dic['Biggest delay cause'][0]}**")
-    display_delay_correlation_heatmap(stats)
 
+    st.subheader(language_dic[st.session_state["language"]]["top_3_station_by_data"])
+    train_sched, train_canc, avg_journey_time = st.columns(3)
+    with train_sched:
+        display_bar_chart(dic["Top 3 stations with most trains scheduled"], language_dic[st.session_state["language"]]["train_scheduled"], language_dic[st.session_state["language"]]["total_scheduled"])
+    with train_canc:
+        display_bar_chart(dic["Top 3 stations with most trains cancelled"], language_dic[st.session_state["language"]]["train_cancelled"], language_dic[st.session_state["language"]]["total_cancelled"])
+    with avg_journey_time:      
+        display_bar_chart(dic["Top 3 stations with most average journey time"], language_dic[st.session_state["language"]]["avg_journey_time"], language_dic[st.session_state["language"]]["avg_delay"])
+
+    st.divider()
+
+    st.subheader(language_dic[st.session_state["language"]]["key_metrics"])
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric(language_dic[st.session_state["language"]]["avg_journey_time(hours)"], value=f"{round(dic['Average journey time'] / 60, 1)}h")
+    with col2:
+        st.metric(language_dic[st.session_state["language"]]["avg_delay_time(minutes)"], value=f"{dic['Average delay']}m")
+    with col3:
+        st.metric(language_dic[st.session_state["language"]]["next_month_prediction"], value=f"{pred['predict mean']}m")
+
+    st.subheader(language_dic[st.session_state["language"]]["pct_delay_bigger_than_60mn"])
+    st.progress(min(dic["delay > 60"] / 100, 1.0))
+
+    st.subheader(language_dic[st.session_state["language"]]["top_delay_cause"])
+    st.markdown(f'<div class="stInfo">Main cause of delay: <strong>{dic["Biggest delay cause"][0]}</strong></div>', unsafe_allow_html=True)
+
+    st.subheader(language_dic[st.session_state["language"]]["delay_correlation_matrix"])
+    display_delay_correlation_heatmap(stats)
 
 home_page()
