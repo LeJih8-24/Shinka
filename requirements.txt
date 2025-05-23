@@ -6,3 +6,5 @@ st-circular-progress==0.3.9
 streamviz==5.1
 streamlit_folium==0.25.0
 folium==0.19.6
+scikit-learn==1.6.1
+seaborn==0.13.2
