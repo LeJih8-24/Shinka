@@ -4,6 +4,8 @@ import streamviz as sv
 import pandas as pd
 import folium
 import random
+import seaborn as sns
+import matplotlib.pyplot as plt
 from st_circular_progress import CircularProgress
 from streamlit_folium import st_folium
 from src.station_pages.unique_station_data import get_values_per_station, get_route_info, get_all_infos, extract_monthly_metrics
@@ -60,6 +62,52 @@ def styled_bar_chart(data: pd.DataFrame, title: str = "", label: str = ""):
         ))
     ).properties(title=title)
     return chart
+
+def plot_delay_evolution(df: pd.DataFrame, departure_station: str, arrival_station: str):
+    required_columns = [
+        "Date", "Departure station", "Arrival station", "Average delay of all trains at departure"
+    ]
+
+    missing = [col for col in required_columns if col not in df.columns]
+    if missing:
+        st.error(f"Colonnes manquantes : {missing}")
+        return
+
+    # On cast la date en datetime
+    df_clean = df.copy()
+    df_clean["Date"] = pd.to_datetime(df_clean["Date"], errors="coerce")
+
+    # On filtre sur les stations
+    filtered = df_clean[
+        (df_clean["Departure station"] == departure_station) &
+        (df_clean["Arrival station"] == arrival_station)
+    ]
+
+    if filtered.empty:
+        st.warning("Aucune donnée pour cette combinaison de stations 🕵️‍♂️")
+        return
+
+    filtered["Month"] = filtered["Date"].dt.to_period("M")
+
+    filtered["Average delay of all trains at departure"] = pd.to_numeric(
+        filtered["Average delay of all trains at departure"], errors="coerce"
+    )
+
+    monthly_avg = (
+        filtered.groupby("Month")["Average delay of all trains at departure"]
+        .mean()
+        .reset_index()
+    )
+    monthly_avg["Month"] = monthly_avg["Month"].dt.to_timestamp()
+
+    plt.figure(figsize=(10, 5))
+    sns.lineplot(data=monthly_avg, x="Month", y="Average delay of all trains at departure", marker="o")
+    plt.title(f"Évolution du retard moyen - {departure_station} → {arrival_station}", fontsize=14)
+    plt.xlabel("Mois")
+    plt.ylabel("Retard moyen au départ (min)")
+    plt.grid(True)
+    plt.xticks(rotation=45)
+    st.pyplot(plt)
 
 def station_map():
     set_route_style()
@@ -139,6 +187,7 @@ def station_map():
             styled_bar_chart(chart_data_delay, title=language_dic[st.session_state["language"]]["avg_delay"], label="Minutes"),
             use_container_width=True
         )
+    plot_delay_evolution(stats, start, end)
 
 # Appel final
 stats = read_csv("cleaned_dataset.csv")
