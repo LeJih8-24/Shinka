@@ -1,0 +1,12 @@
+[theme]
+base = "light"
+primaryColor = "#022e5a"
+backgroundColor = "#f9fafa"  # fond général clair et doux
+secondaryBackgroundColor = "#e5ecf3"  # pour les widgets ou encarts
+textColor = "#111111"  # texte bien lisible
+font = "sans serif"  # police clean, moderne
+
+[theme.sidebar]
+backgroundColor = "#022e5a"
+secondaryBackgroundColor = "#03488C"
+textColor = "#ffffff"  # blanc lisible sur fond foncé
