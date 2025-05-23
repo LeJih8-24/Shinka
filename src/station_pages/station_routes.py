@@ -9,72 +9,82 @@ from streamlit_folium import st_folium
 from src.station_pages.unique_station_data import get_values_per_station, get_route_info, get_all_infos, extract_monthly_metrics
 from get_data import read_csv
 from src.station_pages.table_data import clean_names, coor_station
+from src.language_dic import language_dic
+
+def set_route_style():
+    st.markdown("""
+    <style>
+        .block-container {
+            padding: 2rem 3rem;
+        }
+        h1, h2, h3 {
+            color: #022e5a;
+        }
+        .stSelectbox label {
+            font-weight: bold;
+        }
+        .metric-container, .altair-chart {
+            background-color: #f0f6fc;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 0.5rem;
+        }
+    </style>
+    """, unsafe_allow_html=True)
 
 def generate_intermediate_coords(start_coord, end_coord, steps=12, jitter=0.1):
-    """
-    Génère une liste de tuples (lat, lon) reliant start_coord à end_coord
-    avec une interpolation fluide + un peu de bruit aléatoire (jitter).
-
-    - start_coord : tuple (lat, lon) de départ
-    - end_coord   : tuple (lat, lon) d'arrivée
-    - steps       : nombre total de points (incluant start et end)
-    - jitter      : amplitude maximale du bruit ajouté
-    """
     lat1, lon1 = start_coord
     lat2, lon2 = end_coord
 
     coords = [start_coord]
     for i in range(steps):
-        t = i / (steps - 1)  # valeur de 0 à 1
-        # interpolation linéaire
+        t = i / (steps - 1)
         lat = lat1 + t * (lat2 - lat1)
         lon = lon1 + t * (lon2 - lon1)
-        # ajout de petites perturbations pour rendre la ligne "fluide"
-        lat += random.uniform(-jitter, jitter) * (1 - abs(0.5 - t)) * 2  # moins de jitter en début/fin
+        lat += random.uniform(-jitter, jitter) * (1 - abs(0.5 - t)) * 2
         lon += random.uniform(-jitter, jitter) * (1 - abs(0.5 - t)) * 2
         coords.append((lat, lon))
     coords.append(end_coord)
     return coords
 
 def styled_bar_chart(data: pd.DataFrame, title: str = "", label: str = ""):
-
     chart = alt.Chart(data).mark_bar(
-        size=20,  # ← largeur de barre explicite
-        cornerRadiusEnd=5  # petit arrondi stylé
+        size=20,
+        cornerRadiusEnd=5
     ).encode(
         y=alt.Y("category:N", title="", sort=["Route", "National mean"]),
         x=alt.X("value:Q", title=label),
         color=alt.Color("category:N", scale=alt.Scale(
             domain=["Route", "National mean"],
             range=["#1f77b4", "#ff7f0e"]
-        )))    
-
+        ))
+    ).properties(title=title)
     return chart
 
 def station_map():
-    st.title("Routes")
+    set_route_style()
+    st.title(language_dic[st.session_state["language"]]["comp_between_stations"])
 
     df = pd.DataFrame({"Cities": clean_names})
 
-    start_col, end_col = st.columns(2, border=True)
+    start_col, end_col = st.columns(2)
     with start_col:
-        start = st.selectbox("Select a departure station", df["Cities"], key="start_station")
+        start = st.selectbox(f"{language_dic[st.session_state["language"]]["start_station"]}", df["Cities"], key="start_station")
     with end_col:
-        end = st.selectbox("Select an arrival station", df["Cities"], key="end_station")
+        end = st.selectbox(f"{language_dic[st.session_state["language"]]["end_station"]}", df["Cities"], key="end_station")
 
-    route_info = get_route_info(start, end, stats)
     try:
-        if (route_info == 1):
-            st.title("There is no routes for those stations")
-            return 0
+        route_info = get_route_info(start, end, stats)
+        if route_info == 1:
+            st.warning(f"{language_dic[st.session_state["language"]]["no_route_error"]}")
+            return
     except Exception as e:
-        if not e:
-            print(e)
-    
-    st.subheader(f'Here is the information for the route:')
-    st.subheader(f'\n:red[{start}] - :green[{end}]')
+        st.error("Erreur lors du chargement de la route.")
+        return
 
-    # Init state for previous values and coords
+    st.subheader(f"{language_dic[st.session_state["language"]]["route_from"]} :red[{start}] → :green[{end}]")
+
+    # Init state
     if "previous_start" not in st.session_state:
         st.session_state.previous_start = None
     if "previous_end" not in st.session_state:
@@ -82,7 +92,7 @@ def station_map():
     if "generated_coords" not in st.session_state:
         st.session_state.generated_coords = []
 
-    # If selection has changed → update coords
+    # Recalcul coord si sélection changée
     if start != st.session_state.previous_start or end != st.session_state.previous_end:
         st.session_state.generated_coords = generate_intermediate_coords(
             coor_station[start], coor_station[end]
@@ -96,50 +106,41 @@ def station_map():
     ]
     folium_map = folium.Map(location=midpoint, zoom_start=5)
 
-    folium.Marker(
-        location=coor_station[start],
-        popup=start,
-        icon=folium.Icon(color="red"),
-    ).add_to(folium_map)
-
-    folium.Marker(
-        location=coor_station[end],
-        popup=end,
-        icon=folium.Icon(color="green"),
-    ).add_to(folium_map)
+    folium.Marker(location=coor_station[start], popup=start, icon=folium.Icon(color="red")).add_to(folium_map)
+    folium.Marker(location=coor_station[end], popup=end, icon=folium.Icon(color="green")).add_to(folium_map)
 
     folium.PolyLine(
         locations=st.session_state.generated_coords,
         color="blue",
-        weight=3,
-        tooltip="Previous Route",
+        weight=4,
+        tooltip="Trajet estimé"
     ).add_to(folium_map)
 
-    map, average_route = st.columns(2)
-    with map:
+    map_col, stats_col = st.columns([1, 1])
+    with map_col:
         st_folium(folium_map, height=450, use_container_width=True)
-    with average_route:
-        c = st.container(border=True)
-        with c:
-            chart_data_journey = pd.DataFrame({
-                "category": ["Route", "National mean"],
-                "value": [route_info["Average journey time"], all_info["Average journey time"]],
+
+    with stats_col:
+        st.markdown(f"### {language_dic[st.session_state["language"]]["stats"]}")
+        chart_data_journey = pd.DataFrame({
+            "category": ["Route", "National mean"],
+            "value": [route_info["Average journey time"], all_info["Average journey time"]],
         })
-            chart_data_delay = pd.DataFrame({
-                "category": ["Route", "National mean"],
-                "value": [route_info["Average delay"], all_info["Average delay"]],
+        chart_data_delay = pd.DataFrame({
+            "category": ["Route", "National mean"],
+            "value": [route_info["Average delay"], all_info["Average delay"]],
         })
-            st.write("Average Journey Time (min)")
-            st.altair_chart(
-            styled_bar_chart(chart_data_journey, title="Average Journey Time (min)", label="Minutes"),
+
+        st.altair_chart(
+            styled_bar_chart(chart_data_journey, title=language_dic[st.session_state["language"]]["avg_journey_time"], label="Minutes"),
             use_container_width=True
         )
-            st.write("Average Delay (min)")
-            st.altair_chart(
-            styled_bar_chart(chart_data_delay, title="Average Delay (min)", label="Minutes"),
+        st.altair_chart(
+            styled_bar_chart(chart_data_delay, title=language_dic[st.session_state["language"]]["avg_delay"], label="Minutes"),
             use_container_width=True
         )
-            
+
+# Appel final
 stats = read_csv("cleaned_dataset.csv")
 all_info = get_all_infos(stats)
 
