@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+from src.language_dic import language_dic
+import streamlit as st
 
 def get_mean_value_df(df, column):
     avg_delay = df[column].tolist()
@@ -118,7 +120,7 @@ def extract_monthly_metrics(df, year, month):
     filtered_df = df[(df["Date"].dt.year == year) & (df["Date"].dt.month == month)]
 
     if filtered_df.empty:
-        return {"error": f"Aucune donnée pour {year}-{str(month).zfill(2)}"}
+        return {"error": f"{language_dic[st.session_state["language"]]["no_data_date"]} {year}-{str(month).zfill(2)}"}
 
     result = {
         "Total scheduled trains": int(get_sum_value_df(filtered_df, "Number of scheduled trains")),
