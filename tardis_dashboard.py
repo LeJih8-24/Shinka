@@ -20,6 +20,8 @@ def call_pages():
 if "language" not in st.session_state:
     st.session_state["language"] = "EN"
 
+st.logo("assets/shinka.png", size="large")
+
 with st.sidebar:
     selected_flag = st.selectbox("Choose your language", get_all_languages_flags())
     flag_to_lang = {language_dic[k]["flag"]: k for k in language_dic}
