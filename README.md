@@ -60,6 +60,48 @@ Permet de voir le temps de trajet moyen, le temps de retard moyen mais égalemen
 
 Ajout d'une matrice de corrélation des délais et l'affichage de la plus grande cause de retard
 
+## Infos sur les stations
+
+Permet de retrouver des données triées par station telles que :
+
+#### Données exprimées en pourcentage
+
+- Pourcentage de trains uniquement nationaux
+- Pourcentage de trains maintenus
+- Plus grande cause de retard
+
+#### Moyennes
+
+Moyennes de retard et moyenne de temps de trajet
+
+## Trajets entre deux stations
+
+#### Affichage du trajet
+
+Le trajet est affiché sur une carte avec la génération d'un pseudo trajet
+
+#### Statistiques
+
+Affichage du temps de trajet moyen et du retard en moyenne
+
+#### Graphique évolutif
+
+Permet d'afficher l'évolution du retard moyen sur cette ligne tous les mois
+
+## Données par date
+
+#### Statistiques basiques
+
+Permet d'afficher :
+
+- Les trains programmés
+- Les trains annulés
+- Le retard moyen
+
+Et affiche l'évolution depuis le mois dernier
+
+Affichage circulaire du pourcentage du taux d'annulation
+
 ## Gestion du multilingue
 
 Tous les labels et titres s’adaptent selon la langue sélectionnée.
@@ -67,7 +109,6 @@ Tous les labels et titres s’adaptent selon la langue sélectionnée.
 ---
 
 
----
 Ce module est développé dans le cadre du projet **Tardis** à EPITECH Strasbourg.
 
 

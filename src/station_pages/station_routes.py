@@ -73,11 +73,9 @@ def plot_delay_evolution(df: pd.DataFrame, departure_station: str, arrival_stati
         st.error(f"Colonnes manquantes : {missing}")
         return
 
-    # On cast la date en datetime
     df_clean = df.copy()
     df_clean["Date"] = pd.to_datetime(df_clean["Date"], errors="coerce")
 
-    # On filtre sur les stations
     filtered = df_clean[
         (df_clean["Departure station"] == departure_station) &
         (df_clean["Arrival station"] == arrival_station)
