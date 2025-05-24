@@ -19,59 +19,25 @@ train-delay-project/
 
 ---
 
-## Step 1: Data Exploration & Cleaning
+## Données attendues
 
-Before any analysis, we make sure the data is fresh and clean.  
-Goal: clean up the dataset, fix any weird values, and prep it for modeling.
+Le fichier `cleaned_dataset.csv` doit contenir au minimum :
+- Nom des stations
+- Données horaires (durée trajet, retard)
+- Pourcentages par cause de retard
+- Colonne `Month` pour les graphiques temporels
 
-### Tasks:
-- Load and inspect the dataset
-- Handle missing values and remove duplicates
-- Convert columns to appropriate data types
-- Feature engineering (day of the week, peak hours, etc.)
+## Dépendances
 
----
-
-## Step 2: Data Visualization & Analysis
-
-Once the data is clean, we use visualizations to detect trends and delay patterns:  
-when, where, and why the trains are running late.
-
-### Tasks:
-- Generate descriptive statistics
-- Visualize delay distributions (histograms, boxplots…)
-- Compare delays across stations and times of day
-- Use heatmaps to explore variable correlations
-
----
-
-## Step 3: Prediction Model
-
-Time to switch to Machine Learning. We use historical data to predict future delays.
-
-### Tasks:
-- Select relevant features (e.g., departure station, time, past delays)
-- Train a ML model (Linear Regression, Decision Tree, Random Forest…)
-- Evaluate performance (RMSE, R², accuracy…)
-- Tune hyperparameters to boost performance
-- Compare different models and justify the final choice
-
----
-
-## Step 4: Streamlit Dashboard
-
-Now for the star of the show: a Streamlit app to explore insights and interact with predictions in real time.
-
-### Tasks:
-- Delay distribution charts (histograms, boxplots…)
-- Station-level analysis (average delays, cancellation rates)
-- Heatmaps showing contributing factors (traffic, infrastructure, incidents…)
-- Interactive elements: select stations, routes, dates
-- Summary stats: average delays, punctuality, cancellations
-- Integrated model for real-time predictions
-- Deploy the app + write user documentation
-
----
+```python
+import streamlit as st
+from st_circular_progress import CircularProgress
+import pandas as pd
+import numpy as np
+import altair as alt
+import seaborn as sns
+import matplotlib.pyplot as plt
+```
 
 ## Dashboard UX
 
@@ -80,15 +46,30 @@ Designed to be accessible even for non-technical users.
 
 ---
 
-## Coming Soon
+## Home
 
-> To be added:
-> - Dataset details
-> - Technical architecture
-> - Local setup instructions
-> - Link to the deployed app
+#### Top 3 des stations par données
+
+Permet de voir des statistiques de base sur les données récupérées tel que le retard moyen, le plus de trains programmés etc.
+
+#### Extraction de données clés
+
+Permet de voir le temps de trajet moyen, le temps de retard moyen mais également l'intégration d'un langage de prédiction pour reconnaître le temps de retard moyen
+
+#### Causes des délais.
+
+Ajout d'une matrice de corrélation des délais et l'affichage de la plus grande cause de retard
+
+## Gestion du multilingue
+
+Tous les labels et titres s’adaptent selon la langue sélectionnée.
 
 ---
+
+
+---
+Ce module est développé dans le cadre du projet **Tardis** à EPITECH Strasbourg.
+
 
 ## Quick Start
 

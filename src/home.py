@@ -113,11 +113,11 @@ def home_page():
     st.subheader(language_dic[st.session_state["language"]]["top_3_station_by_data"])
     train_sched, train_canc, avg_journey_time = st.columns(3)
     with train_sched:
-        display_bar_chart(dic["Top 3 stations with most trains scheduled"], language_dic[st.session_state["language"]]["train_scheduled"], language_dic[st.session_state["language"]]["total_scheduled"])
+        display_bar_chart(dic["Top 3 stations with most trains scheduled"], language_dic[st.session_state["language"]]["train_scheduled"], "Total scheduled trains")
     with train_canc:
-        display_bar_chart(dic["Top 3 stations with most trains cancelled"], language_dic[st.session_state["language"]]["train_cancelled"], language_dic[st.session_state["language"]]["total_cancelled"])
+        display_bar_chart(dic["Top 3 stations with most trains cancelled"], language_dic[st.session_state["language"]]["train_cancelled"], "Total cancelled trains")
     with avg_journey_time:      
-        display_bar_chart(dic["Top 3 stations with most average journey time"], language_dic[st.session_state["language"]]["avg_journey_time"], language_dic[st.session_state["language"]]["avg_delay"])
+        display_bar_chart(dic["Top 3 stations with most average journey time"], language_dic[st.session_state["language"]]["avg_journey_time"], "Avg journey time (min)")
 
     st.divider()
 
